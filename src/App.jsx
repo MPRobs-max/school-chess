@@ -1,0 +1,640 @@
+
+import { Chessboard } from "react-chessboard";
+import { Chess } from "chess.js";
+import { io } from "socket.io-client";
+import { useState, useEffect, useRef } from "react";
+
+// =====================
+// SERVER CONNECTION
+// This connects the website to your Node.js server.
+// Your server must be running on port 5000.
+// =====================
+const socket = io("http://localhost:5000");
+
+function App() {
+  // =====================
+  // WEBSITE MEMORY / STATE
+  // These remember information while the site is being used.
+  // =====================
+
+  // Stores the current chess game and board position.
+  const [game, setGame] = useState(new Chess());
+
+  // Stores the game code created by the server.
+  const [gameCode, setGameCode] = useState("");
+
+  // Stores the code typed into the "Enter game code" box.
+  const [joinCode, setJoinCode] = useState("");
+
+  // Stores messages shown on the page, such as "Check!" or "Game created."
+  const [message, setMessage] = useState("");
+
+  // Stores whether this player is white or black.
+  const [playerColor, setPlayerColor] = useState("");
+
+  // Controls which page is showing: "home" or "parents".
+  const [page, setPage] = useState("home");
+  const [showLearnMenu, setShowLearnMenu] =useState(false);
+
+  //Stores moves to show in move panel
+  const [moveHistory, setMoveHistory] = useState([]);
+
+  //This adds the clock
+  const [timeChoice, setTimeChoice] = useState(10);
+  const [whiteTime, setWhiteTime] = useState(10 * 60);
+  const [blackTime, setBlackTime] = useState(10 * 60);
+
+  //This variable will track whether both players have joined
+  const [gameStarted, setGameStarted] = useState(false);
+
+  //This will bring back buttons for create game
+  const [gameOver, setGameOver] = useState(false);
+
+  //This will scroll the moves panel down
+  const movesRef = useRef(null);
+  useEffect(() => {
+  if (movesRef.current) {
+    movesRef.current.scrollTop = movesRef.current.scrollHeight;
+  }
+}, [moveHistory]);
+
+  // =====================
+  // SERVER MESSAGES
+  // These listen for messages sent from the server.
+  // =====================
+
+  socket.off("gameCreated").on("gameCreated", (data) => {
+      const chosenTime = data.timeChoice || timeChoice || 10;
+    setGameCode(data.gameCode);
+    setPlayerColor(data.color);
+    setMessage("Game created.");
+    setWhiteTime(data.whiteTime);
+    setBlackTime(data.blackTime);
+  });
+
+  socket.off("gameJoined").on("gameJoined", (data) => {
+    
+     console.log("Black received timeChoice:", data.timeChoice);
+    const chosenTime = data.timeChoice || timeChoice || 10;
+    setGameCode(data.gameCode);
+    setPlayerColor(data.color);
+    setWhiteTime(data.whiteTime);
+    setBlackTime(data.blackTime);
+    setMessage("Joined game: You play the black pieces " + data.gameCode);
+  });
+
+socket.off("clockUpdate").on("clockUpdate",(data)=>{
+  setWhiteTime(data.whiteTime);
+  setBlackTime(data.blackTime);
+});
+
+  socket.off("message").on("message", (msg) => {
+    setMessage(msg);
+
+    if (msg === "Both players joined. Game started!") {
+      setGameStarted(true);
+    }
+      if (
+    msg.includes("resigned") ||
+    msg.includes("Checkmate") ||
+    msg.includes("Time is up")
+  ) {
+    setGameStarted(false);
+    setGameOver(true);
+    setGameCode("");
+    setPlayerColor("");
+    setMoveHistory([]);
+    }
+  });
+
+  // When the other player moves, the server sends the new board position here.
+  socket.off("newPosition").on("newPosition", (data) => {
+    
+    if (typeof data === "string") {
+
+    const newGame = new Chess(data);
+    setGame(newGame);
+    return;
+  }
+
+  const newGame = new Chess(data.fen);
+  setGame(newGame);
+  setMoveHistory(data.history ||[]);
+});
+
+  // =====================
+  // CREATE GAME BUTTON
+  // This runs when someone clicks "Create Game".
+  // =====================
+  function createGame() {
+    setGame (new Chess());
+    setMoveHistory([]);
+    setWhiteTime(timeChoice * 60);
+    setBlackTime(timeChoice * 60);
+    socket.emit("createGame", timeChoice);
+  }
+
+  // =====================
+  // JOIN GAME BUTTON
+  // This runs when someone enters a code and clicks "Join Game".
+  // =====================
+  function joinGame() {
+    setGame(new Chess());
+    setMoveHistory([]);
+    setMessage("");
+    setGameStarted(false);
+    socket.emit("joinGame", joinCode.toUpperCase());
+  }
+
+  // =====================
+  // MOVING PIECES
+  // This runs every time a player tries to move a piece.
+  // =====================
+  function movePiece(sourceSquare, targetSquare) {
+    if (!gameStarted) {
+    return false;
+  }
+  if (whiteTime === 0 || blackTime === 0) {
+    return false;
+  }
+    const piece = game.get(sourceSquare);
+    
+
+    // If there is no piece on the square clicked, stop.
+    if (!piece) {
+      return false;
+    }
+
+    // White player can only move white pieces.
+    if (playerColor === "white" && piece.color !== "w") {
+      return false;
+    }
+
+    // Black player can only move black pieces.
+    if (playerColor === "black" && piece.color !== "b") {
+      return false;
+    }
+
+    // Make a copy of the game before trying the move.
+    const gameCopy = new Chess(game.fen());
+
+    const move = gameCopy.move({
+      from: sourceSquare,
+      to: targetSquare,
+      promotion: "q",
+    });
+
+    // If the move is illegal, reject it.
+    if (move === null) {
+      return false;
+    }
+
+    // Update this player's board.
+    setGame(gameCopy);
+    setMoveHistory(gameCopy.history());
+
+    // Show check/checkmate messages.
+    if (gameCopy.isCheckmate()) {
+      setMessage(
+        gameCopy.turn() === "w"
+          ? "Checkmate! White has lost."
+          : "Checkmate! Black has lost."
+      );
+    } else if (gameCopy.inCheck()) {
+      setMessage(
+        gameCopy.turn() === "w"
+          ? "White is in check!"
+          : "Black is in check!"
+      );
+    } else {
+      setMessage("");
+    }
+
+    // Send the move to the server so the other player sees it.
+    socket.emit("move", {
+      gameCode,
+      move,
+    });
+    // Time function
+    return true;
+  }
+    function formatTime (seconds){
+      const minutes = Math.floor(seconds /60);
+      const secs = seconds % 60;
+
+      return `${minutes}:${secs.toString().padStart(2, "0")}`;
+    }
+  return (
+    <>
+      {/* =====================
+          TOP GREEN MENU BAR
+          This is the bar at the very top of the website.
+          It contains the Home and For Parents buttons.
+      ===================== */}
+      <div
+        style={{
+          padding: "20px",
+          width: "100%",
+          boxSizing: "border-box",
+          backgroundColor: "#50c878",
+          display: "flex",
+          gap: "30px",
+          justifyContent: "flex-end",
+          fontFamily: "Arial, sans-serif",
+          alignItems: "center",
+        }}
+      >
+        <div
+  onClick={() => setPage("home")}
+  style={{
+    color: "white",
+    cursor: "pointer",
+    fontSize: "22px",
+    fontWeight: "normal",
+  }}
+>
+  Home
+</div>
+
+{/* LEARN MENU */}
+<div
+  style={{ position: "relative", 
+  
+  }}
+  onMouseEnter={() => setShowLearnMenu(true)}
+  onMouseLeave={() => setShowLearnMenu(false)}
+>
+  <div
+    style={{
+      color: "white",
+      cursor: "pointer",
+      fontSize: "22px",
+      fontWeight: "normal",
+    }}
+  >
+    Learn
+  </div>
+
+  {showLearnMenu && (
+    <div
+      style={{
+        position: "absolute",
+        top: "100%",
+        right: "0",
+        backgroundColor: "white",
+        border: "1px solid #ccc",
+        borderRadius: "6px",
+        minWidth: "180px",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        onClick={() => setPage("whiteOpening")}
+        style={{
+          padding: "10px",
+          cursor: "pointer",
+        }}
+      >
+        White Opening
+      </div>
+
+      <div
+        onClick={() => setPage("blackOpening")}
+        style={{
+          padding: "10px",
+          cursor: "pointer",
+        }}
+      >
+        Black Opening
+      </div>
+    </div>
+  )}
+</div>
+
+<div
+  onClick={() => setPage("parents")}
+  style={{
+    color: "white",
+    cursor: "pointer",
+    fontSize: "22px",
+    fontWeight: "normal",
+  }}
+
+  
+>
+  For Parents
+</div>
+      </div>
+
+      {/* =====================
+          HOME PAGE
+          This page contains the chessboard and game controls.
+      ===================== */}
+      {page === "home" && (
+        <div
+          style={{
+            padding: "20px",
+            display: "flex",
+            gap: "50px",
+            alignItems: "flex-start",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          {/* =====================
+              LEFT SIDE PANEL
+              This is the left side of the page.
+              It contains:
+              - site title
+              - move list
+              - create/join game section
+              - messages
+              - player colour
+              - game code
+          ===================== */}
+          <div
+            style={{
+              width: "420px",
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              height: "85vh",
+            }}
+          >
+            {/* SITE TITLE */}
+            <h1
+              style={{
+                fontSize: "48px",
+                marginTop: "0",
+                whiteSpace: "nowrap",
+                marginBottom: "20px",
+              }}
+            >
+              Mr Roberts' Chess site
+            </h1>
+
+            {/* =====================
+                MOVE NOTATION PANEL
+                This shows the moves as the game is played.
+                Example:
+                1. e4 e5
+                2. Nf3 Nc6
+            ===================== */}
+            <div
+            ref={movesRef}
+              style={{
+                marginTop: "20px",
+                maxHeight: "300px",
+                overflowY: "auto",
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                padding: "10px",
+                fontSize: "18px",
+              }}
+            >
+              <h3 style={{ marginTop: "0" }}>Moves</h3>
+
+              {moveHistory.length === 0 && <p>No moves yet.</p>}
+
+              {moveHistory.map((move, index) =>
+                index % 2 === 0 ? (
+                  <div key={index}>
+                    {Math.floor(index / 2) + 1}. {move}{" "}
+                    {moveHistory[index + 1] || ""}
+                  </div>
+                ) : null
+              )}
+            </div>
+
+            {/* =====================
+                BOTTOM LEFT GAME CONTROLS
+                This section is pushed to the bottom of the left panel.
+                It contains:
+                - Create Game button
+                - Join Game input
+                - messages
+                - player colour
+                - game code
+            ===================== */}
+            <div style={{ marginTop: "auto" }}>
+              {/* =====================
+    GAME RESULT MESSAGE
+===================== */}
+{message && (
+  <div
+    style={{
+      fontSize: "28px",
+      color: "#cc4444",
+      marginTop: "30px",    
+      marginBottom: "15px",
+    }}
+  >
+    {message}
+  </div>
+)}
+              {!gameCode && (
+                <>
+                
+            <label>
+              Game time:
+            <select
+              value={timeChoice}
+              onChange={(e) => setTimeChoice(Number(e.target.value))}
+              style={{
+              fontSize: "20px",
+              padding: "10px",
+              marginLeft: "10px",
+          }}
+            >
+              <option value={5}>5 minutes</option>
+              <option value={10}>10 minutes</option>
+              <option value={15}>15 minutes</option>
+              <option value={30}>30 minutes</option>
+            </select>
+            </label>
+
+              <br />
+              <br />
+
+                  <button
+                    style={{
+                      fontSize: "20px",
+                      padding: "12px 24px",
+                    }}
+                    onClick={createGame}
+                  >
+                    Create Game
+                  </button>
+
+                  <br />
+                  <br />
+
+                  <input
+                    style={{
+                      fontSize: "20px",
+                      padding: "12px",
+                      width: "220px",
+                    }}
+                    placeholder="Enter game code"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                  />
+
+                  <button
+                    style={{
+                      fontSize: "20px",
+                      padding: "12px 24px",
+                    }}
+                    onClick={joinGame}
+                  >
+                    Join Game
+                  </button>
+                </>
+              )}
+
+              
+
+              {/* PLAYER COLOUR MESSAGE */}
+              {playerColor && <h3>You play the {playerColor} pieces</h3>}
+
+              {/* GAME CODE DISPLAY */}
+              {gameCode && !gameStarted && 
+                <h2>Game Code: {gameCode}</h2>
+                }
+
+                
+
+              {/*TURN INDICATOR*/}
+              {gameCode && (
+                <div
+                style={{
+                  fontSize: "24px",
+                  marginTop: "15px",
+                  padding: "10px",
+                  border :"1px solid #ccc",
+                  borderRadius: "8px",
+                }}
+                >
+                  <div>White: {formatTime(whiteTime)}</div>
+                  <div>Black: {formatTime(blackTime)}</div>
+                <h3>
+                  {game.turn() === "w" ? "White to move" : "Black to move"}
+                </h3>
+                <button
+  onClick={() => {
+  socket.emit("resign", {
+    gameCode,
+    playerColor,
+  });
+}}
+  style={{
+    fontSize: "18px",
+    padding: "8px 16px",
+    marginTop: "10px",
+    backgroundColor: "#cc4444",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+  }}
+>
+  Resign
+</button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* =====================
+              CHESS BOARD SECTION
+              This is the actual chessboard.
+              The board flips if the player is black.
+          ===================== */}
+          <div
+            style={{
+              width: "85vh",
+              maxWidth: "calc(100vw - 520px)",
+            }}
+          >
+            <Chessboard
+              position={game.fen()}
+              boardOrientation={playerColor === "black" ? "black" : "white"}
+              onPieceDrop={movePiece}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* =====================
+          FOR PARENTS PAGE
+          This appears when the user clicks "For Parents".
+          You can edit the text in this section.
+      ===================== */}
+      {page === "parents" && (
+        <div
+          style={{
+            padding: "30px",
+            maxWidth: "800px",
+            margin: "0 auto",
+            textAlign: "center",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          <h1>For Parents</h1>
+
+          <p>
+            I created this website for my chess club pupils at Great Waltham
+            Junior School. We have been using lichess but anybody in the world
+            can use that website. <br />
+            I made this website so the children can play each other in a safe environment.
+          </p>
+
+          <hr />
+
+          <p>Some things to consider.</p>
+
+          <hr />
+
+          <p>1. There will never be a chat function.</p>
+          <p>2. No games will be saved.</p>
+          <p>3. There are no profiles to be created.</p>
+          <p>4. Your children will never be asked for information.</p>
+          <p>5. This website will always be free.</p>
+          <p>6. I'm not a web developer so there may be bugs.</p>
+        </div>
+
+      )}
+
+      {page === "whiteOpening" && (
+  <div
+    style={{
+      padding: "30px",
+      maxWidth: "800px",
+      margin: "0 auto",
+      textAlign: "center",
+      fontFamily: "Arial, sans-serif",
+    }}
+  >
+    <h1>White Opening</h1>
+    <h2>Coming Soon</h2>
+  </div>
+)}
+
+{page === "blackOpening" && (
+  <div
+    style={{
+      padding: "30px",
+      maxWidth: "800px",
+      margin: "0 auto",
+      textAlign: "center",
+      fontFamily: "Arial, sans-serif",
+    }}
+  >
+    <h1>Black Opening</h1>
+    <h2>Coming Soon</h2>
+  </div>
+)}
+    </>
+  );
+}
+
+export default App;
