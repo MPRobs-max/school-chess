@@ -9,7 +9,11 @@ import { useState, useEffect, useRef } from "react";
 // This connects the website to your Node.js server.
 // Your server must be running on port 5000.
 // =====================
-const socket = io("http://localhost:5000");
+const socket = io(
+  window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://school-chess-6maj.onrender.com"
+);
 
 function App() {
   // =====================
