@@ -43,6 +43,9 @@ function App() {
   //Stores moves to show in move panel
   const [moveHistory, setMoveHistory] = useState([]);
 
+  //This is to make circles appear on squares that pieces can move to
+  const [moveSquares, setMoveSquares] = useState({});
+
   //This adds the clock
   const [timeChoice, setTimeChoice] = useState(10);
   const [whiteTime, setWhiteTime] = useState(10 * 60);
@@ -53,6 +56,8 @@ function App() {
 
   //This will bring back buttons for create game
   const [gameOver, setGameOver] = useState(false);
+
+ 
 
   //This will scroll the moves panel down
   const movesRef = useRef(null);
@@ -150,6 +155,44 @@ socket.off("clockUpdate").on("clockUpdate",(data)=>{
     socket.emit("joinGame", joinCode.toUpperCase());
   }
 
+  //This will make circles appear on the squares that pieces can move to
+function showLegalMoves(square) {
+  const piece = game.get(square);
+
+  if (!piece) {
+    setMoveSquares({});
+    return;
+  }
+
+  if (playerColor === "white" && piece.color !== "w") {
+    setMoveSquares({});
+    return;
+  }
+
+  if (playerColor === "black" && piece.color !== "b") {
+    setMoveSquares({});
+    return;
+  }
+
+  const moves = game.moves({
+    square: square,
+    verbose: true,
+  });
+
+  const newSquares = {};
+
+  moves.forEach((move) => {
+    newSquares[move.to] = {
+      background:
+        "radial-gradient(circle, rgba(80,80,80,0.35) 25%, transparent 26%)",
+      borderRadius: "50%",
+    };
+  });
+
+  setMoveSquares(newSquares);
+}
+
+
   // =====================
   // MOVING PIECES
   // This runs every time a player tries to move a piece.
@@ -196,6 +239,7 @@ socket.off("clockUpdate").on("clockUpdate",(data)=>{
     // Update this player's board.
     setGame(gameCopy);
     setMoveHistory(gameCopy.history());
+    setMoveSquares({});
 
     // Show check/checkmate messages.
     if (gameCopy.isCheckmate()) {
@@ -563,6 +607,8 @@ socket.off("clockUpdate").on("clockUpdate",(data)=>{
               position={game.fen()}
               boardOrientation={playerColor === "black" ? "black" : "white"}
               onPieceDrop={movePiece}
+              onSquareClick={showLegalMoves}
+              customSquareStyles={moveSquares}
             />
           </div>
         </div>
@@ -588,22 +634,23 @@ socket.off("clockUpdate").on("clockUpdate",(data)=>{
           <p>
             I created this website for my chess club pupils at Great Waltham
             Junior School. We have been using lichess but anybody in the world
-            can use that website. <br />
-            I made this website so the children can play each other in a safe environment.
+            can use that website. <br /></p>
+            <hr/>
+           <p> I made this website so the children can play each other in a safe environment.
           </p>
 
           <hr />
 
           <p>Some things to consider.</p>
 
-          <hr />
+          <hr/>
 
           <p>1. There will never be a chat function.</p>
           <p>2. No games will be saved.</p>
           <p>3. There are no profiles to be created.</p>
           <p>4. Your children will never be asked for information.</p>
           <p>5. This website will always be free.</p>
-          <p>6. I'm not a web developer so there may be bugs.</p>
+         
         </div>
 
       )}
