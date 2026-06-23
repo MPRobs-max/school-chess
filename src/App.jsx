@@ -182,12 +182,15 @@ function showLegalMoves(square) {
   const newSquares = {};
 
   moves.forEach((move) => {
-    newSquares[move.to] = {
-      background:
-        "radial-gradient(circle, rgba(80,80,80,0.35) 25%, transparent 26%)",
-      borderRadius: "50%",
-    };
-  });
+    const isCapture = game.get(move.to);
+
+  newSquares[move.to] = {
+    background: isCapture
+           ? "radial-gradient(circle, transparent 55%, rgba(80,80,80,0.5) 56%, rgba(80,80,80,0.5) 70%, transparent 71%)"
+      : "radial-gradient(circle, rgba(80,80,80,0.35) 25%, transparent 26%)",
+  };
+
+});
 
   setMoveSquares(newSquares);
 }
