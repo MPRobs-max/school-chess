@@ -486,11 +486,14 @@ function handleSquareRightClick(square) {
               {moveHistory.length === 0 && <p>No moves yet.</p>}
 
              <div className="moves-list">
-  {moveHistory.map((move, index) => (
-    <span key={index}>
-      {index + 1}. {move}
-    </span>
-  ))}
+  {moveHistory.map((move, index) =>
+    index % 2 === 0 ? (
+      <div className="move-pair" key={index}>
+        {Math.floor(index / 2) + 1}. {move}{" "}
+        {moveHistory[index + 1] || ""}
+      </div>
+    ) : null
+  )}
 </div>
             </div>
 
