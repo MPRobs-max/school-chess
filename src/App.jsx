@@ -68,8 +68,9 @@ function App() {
   //This will scroll the moves panel down
   const movesRef = useRef(null);
   useEffect(() => {
-  if (movesRef.current) {
-    movesRef.current.scrollTop = movesRef.current.scrollHeight;
+  if (movesRef.current && window.innerWidth <=600) {
+   
+    movesRef.current.scrollLeft= movesRef.currect.scrollWidth;
   }
 }, [moveHistory]);
 
@@ -470,7 +471,6 @@ function handleSquareRightClick(square) {
                 2. Nf3 Nc6
             ===================== */}
             <div
-            className="moves-panel"
             ref={movesRef}
               style={{
                 marginTop: "20px",
@@ -486,7 +486,7 @@ function handleSquareRightClick(square) {
 
               {moveHistory.length === 0 && <p>No moves yet.</p>}
 
-             <div className="moves-list">
+             <div className="moves-list" ref={movesRef}>
   {moveHistory.map((move, index) =>
     index % 2 === 0 ? (
       <div className="move-pair" key={index}>
