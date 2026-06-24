@@ -118,7 +118,6 @@ socket.off("clockUpdate").on("clockUpdate",(data)=>{
     setGameStarted(false);
     setGameOver(true);
     setGameCode("");
-    setPlayerColor("");
     setMoveHistory([]);
     }
   });
