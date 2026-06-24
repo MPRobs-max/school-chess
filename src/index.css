@@ -168,16 +168,16 @@ html {
 .moves-panel {
   max-height: none !important;
   overflow-y: hidden !important;
+  overflow-x: auto !important;
 }
 
 .moves-list {
   display: flex;
   gap: 15px;
-  overflow-x: auto;
   white-space: nowrap;
   padding-bottom: 5px;
 }
 
-.moves-list span {
+.moves-pair span {
   flex-shrink: 0;
 }
