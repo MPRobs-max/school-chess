@@ -262,7 +262,6 @@ function handleSquareRightClick(square) {
     const move = gameCopy.move({
       from: sourceSquare,
       to: targetSquare,
-      promotion: "q",
     });
 
     // If the move is illegal, reject it.
