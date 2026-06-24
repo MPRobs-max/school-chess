@@ -43,8 +43,12 @@ function App() {
   //Stores moves to show in move panel
   const [moveHistory, setMoveHistory] = useState([]);
 
+
   //This is to make circles appear on squares that pieces can move to
   const [moveSquares, setMoveSquares] = useState({});
+
+// This will allow players to click and click to move pieces
+  const [selectedSquare, setSelectedSquare] = useState(null);
 
   //This adds the clock
   const [timeChoice, setTimeChoice] = useState(10);
@@ -159,40 +163,46 @@ socket.off("clockUpdate").on("clockUpdate",(data)=>{
 function showLegalMoves(square) {
   const piece = game.get(square);
 
-  if (!piece) {
-    setMoveSquares({});
+  if (
+    piece &&
+    ((playerColor === "white" && piece.color === "w") ||
+      (playerColor === "black" && piece.color === "b"))
+  ) {
+    setSelectedSquare(square);
+
+    const moves = game.moves({
+      square: square,
+      verbose: true,
+    });
+
+    const newSquares = {};
+
+    moves.forEach((move) => {
+      const isCapture = game.get(move.to);
+
+      newSquares[move.to] = {
+        background: isCapture
+          ? "radial-gradient(circle, transparent 55%, rgba(80,80,80,0.5) 56%, rgba(80,80,80,0.5) 70%, transparent 71%)"
+          : "radial-gradient(circle, rgba(80,80,80,0.35) 25%, transparent 26%)",
+      };
+    });
+
+    setMoveSquares(newSquares);
     return;
   }
 
-  if (playerColor === "white" && piece.color !== "w") {
-    setMoveSquares({});
-    return;
+  if (selectedSquare) {
+    const success = movePiece(selectedSquare, square);
+
+    if (success) {
+      setSelectedSquare(null);
+      setMoveSquares({});
+      return;
+    }
   }
 
-  if (playerColor === "black" && piece.color !== "b") {
-    setMoveSquares({});
-    return;
-  }
-
-  const moves = game.moves({
-    square: square,
-    verbose: true,
-  });
-
-  const newSquares = {};
-
-  moves.forEach((move) => {
-    const isCapture = game.get(move.to);
-
-  newSquares[move.to] = {
-    background: isCapture
-           ? "radial-gradient(circle, transparent 55%, rgba(80,80,80,0.5) 56%, rgba(80,80,80,0.5) 70%, transparent 71%)"
-      : "radial-gradient(circle, rgba(80,80,80,0.35) 25%, transparent 26%)",
-  };
-
-});
-
-  setMoveSquares(newSquares);
+  setSelectedSquare(null);
+  setMoveSquares({});
 }
 
 
@@ -243,6 +253,7 @@ function showLegalMoves(square) {
     setGame(gameCopy);
     setMoveHistory(gameCopy.history());
     setMoveSquares({});
+    setSelectedSquare (null);
 
     // Show check/checkmate messages.
     if (gameCopy.isCheckmate()) {
