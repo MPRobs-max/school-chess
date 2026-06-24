@@ -70,7 +70,7 @@ function App() {
   useEffect(() => {
   if (movesRef.current && window.innerWidth <=600) {
    
-    movesRef.current.scrollLeft= movesRef.currect.scrollWidth;
+    movesRef.current.scrollLeft= movesRef.current.scrollWidth;
   }
 }, [moveHistory]);
 
