@@ -262,6 +262,7 @@ function handleSquareRightClick(square) {
     const move = gameCopy.move({
       from: sourceSquare,
       to: targetSquare,
+      promotion: "q",
     });
 
     // If the move is illegal, reject it.
@@ -472,7 +473,7 @@ function handleSquareRightClick(square) {
                 2. Nf3 Nc6
             ===================== */}
             <div
-            ref={movesRef}
+            className="moves-panel"
               style={{
                 marginTop: "20px",
                 maxHeight: "300px",
