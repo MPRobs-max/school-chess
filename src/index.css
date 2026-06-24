@@ -125,3 +125,24 @@ code {
 html {
   overflow-y: scroll;
 }
+
+@media (max-width: 600px) {
+  .home-layout {
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  .left-panel {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .board-area {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .game-code-display {
+    display: none;
+  }
+}
