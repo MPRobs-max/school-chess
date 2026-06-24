@@ -165,19 +165,29 @@ html {
     width: 100% !important;
   }
 }
-.moves-panel {
-  max-height: none !important;
-  overflow-y: hidden !important;
-  overflow-x: auto !important;
-}
-
 .moves-list {
-  display: flex;
-  gap: 15px;
-  white-space: nowrap;
-  padding-bottom: 5px;
+  display: block;
 }
 
-.moves-pair span {
-  flex-shrink: 0;
+.move-pair {
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .moves-panel {
+    max-height: none !important;
+    overflow-y: hidden !important;
+    overflow-x: auto !important;
+  }
+
+  .moves-list {
+    display: flex;
+    gap: 15px;
+    white-space: nowrap;
+    padding-bottom: 5px;
+  }
+
+  .move-pair {
+    flex-shrink: 0;
+  }
 }
