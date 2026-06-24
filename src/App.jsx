@@ -605,7 +605,7 @@ function handleSquareRightClick(square) {
                 >
                   <div>White: {formatTime(whiteTime)}</div>
                   <div>Black: {formatTime(blackTime)}</div>
-                <h3>
+                <h3 className="turn-indicator">
                   {game.turn() === "w" ? "White to move" : "Black to move"}
                 </h3>
                 <button
