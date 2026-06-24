@@ -146,3 +146,24 @@ html {
     display: none;
   }
 }
+@media (max-width: 600px) {
+  h1 {
+    font-size: 36px !important;
+    white-space: normal !important;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .turn-indicator {
+    display: none;
+  }
+
+  .board-area {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .left-panel {
+    width: 100% !important;
+  }
+}
