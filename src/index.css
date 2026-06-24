@@ -196,3 +196,9 @@ html {
     display: none;
   }
 }
+
+@media (max-width: 600px) {
+  .player-colour-playing {
+    display: none;
+  }
+}
