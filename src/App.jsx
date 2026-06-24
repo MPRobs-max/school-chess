@@ -469,6 +469,7 @@ function handleSquareRightClick(square) {
                 2. Nf3 Nc6
             ===================== */}
             <div
+            className="moves-panel"
             ref={movesRef}
               style={{
                 marginTop: "20px",
@@ -484,14 +485,13 @@ function handleSquareRightClick(square) {
 
               {moveHistory.length === 0 && <p>No moves yet.</p>}
 
-              {moveHistory.map((move, index) =>
-                index % 2 === 0 ? (
-                  <div key={index}>
-                    {Math.floor(index / 2) + 1}. {move}{" "}
-                    {moveHistory[index + 1] || ""}
-                  </div>
-                ) : null
-              )}
+             <div className="moves-list">
+  {moveHistory.map((move, index) => (
+    <span key={index}>
+      {index + 1}. {move}
+    </span>
+  ))}
+</div>
             </div>
 
             {/* =====================
