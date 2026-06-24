@@ -418,6 +418,7 @@ function handleSquareRightClick(square) {
       ===================== */}
       {page === "home" && (
         <div
+        className="home-layout"
           style={{
             padding: "20px",
             display: "flex",
@@ -438,7 +439,9 @@ function handleSquareRightClick(square) {
               - game code
           ===================== */}
           <div
+          className="left-panel"
             style={{
+              
               width: "420px",
               flexShrink: 0,
               display: "flex",
@@ -584,7 +587,7 @@ function handleSquareRightClick(square) {
 
               {/* GAME CODE DISPLAY */}
               {gameCode && !gameStarted && 
-                <h2>Game Code: {gameCode}</h2>
+                <h2 className="game-code-display">Game Code: {gameCode}</h2>
                 }
 
                 
@@ -636,6 +639,7 @@ function handleSquareRightClick(square) {
               The board flips if the player is black.
           ===================== */}
           <div
+          className="board-area"
             style={{
               width: "85vh",
               maxWidth: "calc(100vw - 520px)",
