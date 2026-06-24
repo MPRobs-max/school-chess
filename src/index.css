@@ -128,7 +128,7 @@ html {
 
 @media (max-width: 600px) {
   .home-layout {
-    flex-direction: column !important;
+    flex-direction: column-reverse !important;
     gap: 20px !important;
   }
 
