@@ -451,12 +451,13 @@ function handleSquareRightClick(square) {
           >
             {/* SITE TITLE */}
             <h1
-              style={{
-                fontSize: "48px",
-                marginTop: "0",
-                whiteSpace: "nowrap",
-                marginBottom: "20px",
-              }}
+  className={gameStarted ? "game-title-playing" : ""}
+  style={{
+    fontSize: "48px",
+    marginTop: "0",
+    whiteSpace: "nowrap",
+    marginBottom: "20px",
+  }}
             >
               Mr Roberts' Chess site
             </h1>
