@@ -587,7 +587,11 @@ function handleSquareRightClick(square) {
               
 
               {/* PLAYER COLOUR MESSAGE */}
-              {playerColor && <h3>You play the {playerColor} pieces</h3>}
+              {playerColor && (
+  <h3 className={gameStarted ? "player-colour-playing" : ""}>
+    You play the {playerColor} pieces
+  </h3>
+)}
 
               {/* GAME CODE DISPLAY */}
               {gameCode && !gameStarted && 
