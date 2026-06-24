@@ -165,3 +165,19 @@ html {
     width: 100% !important;
   }
 }
+.moves-panel {
+  max-height: none !important;
+  overflow-y: hidden !important;
+}
+
+.moves-list {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 5px;
+}
+
+.moves-list span {
+  flex-shrink: 0;
+}
