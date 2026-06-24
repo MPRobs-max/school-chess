@@ -47,6 +47,8 @@ function App() {
   //This is to make circles appear on squares that pieces can move to
   const [moveSquares, setMoveSquares] = useState({});
 
+  //This will allow players to right click on pieces to have a ring appear around them
+  const [markedSquares, setMarkedSquares] = useState({});
 // This will allow players to click and click to move pieces
   const [selectedSquare, setSelectedSquare] = useState(null);
 
@@ -205,7 +207,23 @@ function showLegalMoves(square) {
   setMoveSquares({});
 }
 
+//allows right click
+function handleSquareRightClick(square) {
+  setMarkedSquares((current) => {
+    const updated = { ...current };
 
+    if (updated[square]) {
+      delete updated[square];
+    } else {
+      updated[square] = {
+        boxShadow: "inset 0 0 0 4px #50c878",
+        borderRadius: "50%",
+      };
+    }
+
+    return updated;
+  });
+}
   // =====================
   // MOVING PIECES
   // This runs every time a player tries to move a piece.
@@ -286,6 +304,12 @@ function showLegalMoves(square) {
 
       return `${minutes}:${secs.toString().padStart(2, "0")}`;
     }
+
+    const boardStyles = {
+  ...moveSquares,
+  ...markedSquares,
+};
+
   return (
     <>
       {/* =====================
@@ -622,7 +646,8 @@ function showLegalMoves(square) {
               boardOrientation={playerColor === "black" ? "black" : "white"}
               onPieceDrop={movePiece}
               onSquareClick={showLegalMoves}
-              customSquareStyles={moveSquares}
+              customSquareStyles={boardStyles}
+              onSquareRightClick={handleSquareRightClick}
             />
           </div>
         </div>
