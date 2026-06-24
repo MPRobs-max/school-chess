@@ -68,9 +68,12 @@ function App() {
   //This will scroll the moves panel down
   const movesRef = useRef(null);
   useEffect(() => {
-  if (movesRef.current && window.innerWidth <=600) {
-   
-    movesRef.current.scrollLeft= movesRef.current.scrollWidth;
+  if (movesRef.current) {
+    if (window.innerWidth <= 600) {
+      movesRef.current.scrollLeft = movesRef.current.scrollWidth;
+    } else {
+      movesRef.current.scrollTop = movesRef.current.scrollHeight;
+    }
   }
 }, [moveHistory]);
 
