@@ -90,6 +90,7 @@ function startClock(gameCode) {
 // =====================
 // WHEN A PLAYER CONNECTS
 // =====================
+
 io.on("connection", (socket) => {
   console.log("A player connected");
 
@@ -224,6 +225,31 @@ io.on("connection", (socket) => {
       }
     } catch {
       socket.emit("message", "That move is not allowed");
+    }
+  });
+
+  socket.on("disconnect", () => {
+    for (const gameCode in games) {
+      const game = games[gameCode];
+
+      if (!game || game.gameOver) continue;
+
+      if (game.white === socket.id || game.black === socket.id) {
+        game.gameOver = true;
+
+        if (game.clockInterval) {
+          clearInterval(game.clockInterval);
+        }
+
+        const winner = game.white === socket.id ? "Black" : "White";
+
+        io.to(gameCode).emit(
+          "message",
+          `${winner} wins! The other player left the game.`
+        );
+
+        break;
+      }
     }
   });
 });
