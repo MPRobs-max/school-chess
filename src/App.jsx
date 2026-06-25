@@ -63,6 +63,9 @@ function App() {
   //This will bring back buttons for create game
   const [gameOver, setGameOver] = useState(false);
 
+  const [pendingMove, setPendingMove]= useState(null);
+  const [showPromotionChoice, setPromotionChoice]=useState(false);
+
  
 
   //This will scroll the moves panel down
@@ -227,11 +230,34 @@ function handleSquareRightClick(square) {
     return updated;
   });
 }
+//This will allow player to choose which piece to promote to
+function isPromotionMove(sourceSquare, targetSquare) {
+  const piece = game.get(sourceSquare);
+
+  if (!piece || piece.type !== "p") {
+    return false;
+  }
+
+  return (
+    (piece.color === "w" && targetSquare[1] === "8") ||
+    (piece.color === "b" && targetSquare[1] === "1")
+  );
+}
+
   // =====================
   // MOVING PIECES
   // This runs every time a player tries to move a piece.
   // =====================
-  function movePiece(sourceSquare, targetSquare) {
+  function movePiece(sourceSquare, targetSquare) {}
+  if (isPromotionMove(sourceSquare, targetSquare)) {
+    setPendingMove({
+      from: sourceSquare,
+      to: targetSquare,
+    });
+    setShowPromotionChoice(true);
+    return false;
+  }
+  {
     if (!gameStarted) {
     return false;
   }
@@ -240,7 +266,35 @@ function handleSquareRightClick(square) {
   }
     const piece = game.get(sourceSquare);
     
+function promotePawn(piece) {
+  if (!pendingMove) return;
 
+  const gameCopy = new Chess(game.fen());
+
+  const move = gameCopy.move({
+    from: pendingMove.from,
+    to: pendingMove.to,
+    promotion: piece,
+  });
+
+  if (!move) {
+    setPendingMove(null);
+    setShowPromotionChoice(false);
+    return;
+  }
+
+  setGame(gameCopy);
+  setMoveHistory(gameCopy.history());
+  setMoveSquares({});
+  setSelectedSquare(null);
+  setPendingMove(null);
+  setShowPromotionChoice(false);
+
+  socket.emit("move", {
+    gameCode,
+    move,
+  });
+}
     // If there is no piece on the square clicked, stop.
     if (!piece) {
       return false;
@@ -642,6 +696,28 @@ function handleSquareRightClick(square) {
               )}
             </div>
           </div>
+
+{showPromotionChoice && (
+  <div
+    style={{
+      marginBottom: "10px",
+      padding: "8px",
+      border: "1px solid #ccc",
+      borderRadius: "8px",
+      backgroundColor: "white",
+      display: "flex",
+      gap: "8px",
+      justifyContent: "center",
+      position: "relative",
+      zIndex: 10,
+    }}
+  >
+    <button onClick={() => promotePawn("q")}>♕</button>
+    <button onClick={() => promotePawn("r")}>♖</button>
+    <button onClick={() => promotePawn("b")}>♗</button>
+    <button onClick={() => promotePawn("n")}>♘</button>
+  </div>
+)}
 
           {/* =====================
               CHESS BOARD SECTION
