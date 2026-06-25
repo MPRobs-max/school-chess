@@ -64,7 +64,7 @@ function App() {
   const [gameOver, setGameOver] = useState(false);
 
   const [pendingMove, setPendingMove]= useState(null);
-  const [showPromotionChoice, setPromotionChoice]=useState(false);
+  const [showPromotionChoice, setPromotionChoice] = useState(false);
 
  
 
@@ -248,113 +248,69 @@ function isPromotionMove(sourceSquare, targetSquare) {
   // MOVING PIECES
   // This runs every time a player tries to move a piece.
   // =====================
-  function movePiece(sourceSquare, targetSquare) {}
-  if (isPromotionMove(sourceSquare, targetSquare)) {
-    setPendingMove({
-      from: sourceSquare,
-      to: targetSquare,
-    });
-    setShowPromotionChoice(true);
+  function movePiece(sourceSquare, targetSquare) {
+  if (!gameStarted) {
     return false;
   }
-  {
-    if (!gameStarted) {
-    return false;
-  }
+
   if (whiteTime === 0 || blackTime === 0) {
     return false;
   }
-    const piece = game.get(sourceSquare);
-    
-function promotePawn(piece) {
-  if (!pendingMove) return;
+
+  const piece = game.get(sourceSquare);
+
+  if (!piece) {
+    return false;
+  }
+
+  if (playerColor === "white" && piece.color !== "w") {
+    return false;
+  }
+
+  if (playerColor === "black" && piece.color !== "b") {
+    return false;
+  }
 
   const gameCopy = new Chess(game.fen());
 
   const move = gameCopy.move({
-    from: pendingMove.from,
-    to: pendingMove.to,
-    promotion: piece,
+    from: sourceSquare,
+    to: targetSquare,
+    promotion: "q",
   });
 
-  if (!move) {
-    setPendingMove(null);
-    setShowPromotionChoice(false);
-    return;
+  if (move === null) {
+    return false;
   }
 
   setGame(gameCopy);
   setMoveHistory(gameCopy.history());
   setMoveSquares({});
   setSelectedSquare(null);
-  setPendingMove(null);
-  setShowPromotionChoice(false);
+
+  if (gameCopy.isCheckmate()) {
+    setMessage(
+      gameCopy.turn() === "w"
+        ? "Checkmate! White has lost."
+        : "Checkmate! Black has lost."
+    );
+  } else if (gameCopy.inCheck()) {
+    setMessage(
+      gameCopy.turn() === "w"
+        ? "White is in check!"
+        : "Black is in check!"
+    );
+  } else {
+    setMessage("");
+  }
 
   socket.emit("move", {
     gameCode,
     move,
   });
+
+  return true;
 }
-    // If there is no piece on the square clicked, stop.
-    if (!piece) {
-      return false;
-    }
-
-    // White player can only move white pieces.
-    if (playerColor === "white" && piece.color !== "w") {
-      return false;
-    }
-
-    // Black player can only move black pieces.
-    if (playerColor === "black" && piece.color !== "b") {
-      return false;
-    }
-
-    // Make a copy of the game before trying the move.
-    const gameCopy = new Chess(game.fen());
-
-    const move = gameCopy.move({
-      from: sourceSquare,
-      to: targetSquare,
-      promotion: "q",
-    });
-
-    // If the move is illegal, reject it.
-    if (move === null) {
-      return false;
-    }
-
-    // Update this player's board.
-    setGame(gameCopy);
-    setMoveHistory(gameCopy.history());
-    setMoveSquares({});
-    setSelectedSquare (null);
-
-    // Show check/checkmate messages.
-    if (gameCopy.isCheckmate()) {
-      setMessage(
-        gameCopy.turn() === "w"
-          ? "Checkmate! White has lost."
-          : "Checkmate! Black has lost."
-      );
-    } else if (gameCopy.inCheck()) {
-      setMessage(
-        gameCopy.turn() === "w"
-          ? "White is in check!"
-          : "Black is in check!"
-      );
-    } else {
-      setMessage("");
-    }
-
-    // Send the move to the server so the other player sees it.
-    socket.emit("move", {
-      gameCode,
-      move,
-    });
-    // Time function
-    return true;
-  }
     function formatTime (seconds){
       const minutes = Math.floor(seconds /60);
       const secs = seconds % 60;
