@@ -484,6 +484,7 @@ function isPromotionMove(sourceSquare, targetSquare) {
             ===================== */}
             <div
             className="moves-panel"
+            ref={movesRef}
               style={{
                 marginTop: "20px",
                 maxHeight: "300px",
@@ -498,7 +499,7 @@ function isPromotionMove(sourceSquare, targetSquare) {
 
               {moveHistory.length === 0 && <p>No moves yet.</p>}
 
-             <div className="moves-list" ref={movesRef}>
+             <div className="moves-list" >
   {moveHistory.map((move, index) =>
     index % 2 === 0 ? (
       <div className="move-pair" key={index}>
@@ -653,27 +654,7 @@ function isPromotionMove(sourceSquare, targetSquare) {
             </div>
           </div>
 
-{showPromotionChoice && (
-  <div
-    style={{
-      marginBottom: "10px",
-      padding: "8px",
-      border: "1px solid #ccc",
-      borderRadius: "8px",
-      backgroundColor: "white",
-      display: "flex",
-      gap: "8px",
-      justifyContent: "center",
-      position: "relative",
-      zIndex: 10,
-    }}
-  >
-    <button onClick={() => promotePawn("q")}>♕</button>
-    <button onClick={() => promotePawn("r")}>♖</button>
-    <button onClick={() => promotePawn("b")}>♗</button>
-    <button onClick={() => promotePawn("n")}>♘</button>
-  </div>
-)}
+
 
           {/* =====================
               CHESS BOARD SECTION
