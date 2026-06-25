@@ -769,6 +769,7 @@ const promotionButtonStyle = {
               onSquareClick={showLegalMoves}
               customSquareStyles={boardStyles}
               onSquareRightClick={handleSquareRightClick}
+              autoPromoteToQueen={true}
             />
           </div>
         </div>
