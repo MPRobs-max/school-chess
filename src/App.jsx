@@ -63,8 +63,9 @@ function App() {
   //This will bring back buttons for create game
   const [gameOver, setGameOver] = useState(false);
 
+//This will allow click and click to promote pieces and give options
   const [pendingMove, setPendingMove]= useState(null);
-  const [showPromotionChoice, setPromotionChoice] = useState(false);
+  const [showPromotionChoice, setShowPromotionChoice] = useState(false);
 
  
 
@@ -230,7 +231,8 @@ function handleSquareRightClick(square) {
     return updated;
   });
 }
-//This will allow player to choose which piece to promote to
+
+//This is to allow promotion to optional pieces after click and click with pawn
 function isPromotionMove(sourceSquare, targetSquare) {
   const piece = game.get(sourceSquare);
 
@@ -249,6 +251,15 @@ function isPromotionMove(sourceSquare, targetSquare) {
   // This runs every time a player tries to move a piece.
   // =====================
   function movePiece(sourceSquare, targetSquare) {
+    if (isPromotionMove(sourceSquare, targetSquare)) {
+    setPendingMove({
+      from: sourceSquare,
+      to: targetSquare,
+    });
+
+    setShowPromotionChoice(true);
+    return false;
+  }
   if (!gameStarted) {
     return false;
   }
@@ -283,10 +294,50 @@ function isPromotionMove(sourceSquare, targetSquare) {
     return false;
   }
 
+  if (!move) {
+    setPendingMove(null);
+    setShowPromotionChoice(false);
+    return;
+  }
+
   setGame(gameCopy);
   setMoveHistory(gameCopy.history());
   setMoveSquares({});
   setSelectedSquare(null);
+  setPendingMove(null);
+  setShowPromotionChoice(false);
+
+  socket.emit("move", {
+    gameCode,
+    move,
+  });
+
+  return true;
+}
+
+function promotePawn(piece) {
+  if (!pendingMove) return;
+
+  const gameCopy = new Chess(game.fen());
+
+  const move = gameCopy.move({
+    from: pendingMove.from,
+    to: pendingMove.to,
+    promotion: piece,
+  });
+
+  if (!move) {
+  setPendingMove(null);
+  setShowPromotionChoice(false);
+  return false;
+}
+
+  setGame(gameCopy);
+  setMoveHistory(gameCopy.history());
+  setMoveSquares({});
+  setSelectedSquare(null);
+  setPendingMove(null);
+  setShowPromotionChoice(false);
 
   if (gameCopy.isCheckmate()) {
     setMessage(
@@ -321,6 +372,15 @@ function isPromotionMove(sourceSquare, targetSquare) {
     const boardStyles = {
   ...moveSquares,
   ...markedSquares,
+};
+
+const promotionButtonStyle = {
+  fontSize: "48px",
+  width: "80px",
+  height: "80px",
+  border: "none",
+  backgroundColor: "white",
+  cursor: "pointer",
 };
 
   return (
@@ -666,8 +726,40 @@ function isPromotionMove(sourceSquare, targetSquare) {
             style={{
               width: "85vh",
               maxWidth: "calc(100vw - 520px)",
+              position:"relative",
             }}
           >
+
+            {showPromotionChoice && (
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      backgroundColor: "rgba(0, 0, 0, 0.25)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 20,
+      borderRadius: "8px",
+    }}
+  >
+    <div
+      style={{
+        backgroundColor: "white",
+        borderRadius: "12px",
+        overflow: "hidden",
+        boxShadow: "0 8px 25px rgba(0,0,0,0.35)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <button onClick={() => promotePawn("q")} style={promotionButtonStyle}>♕</button>
+      <button onClick={() => promotePawn("r")} style={promotionButtonStyle}>♖</button>
+      <button onClick={() => promotePawn("b")} style={promotionButtonStyle}>♗</button>
+      <button onClick={() => promotePawn("n")} style={promotionButtonStyle}>♘</button>
+    </div>
+  </div>
+)}
             <Chessboard
               position={game.fen()}
               boardOrientation={playerColor === "black" ? "black" : "white"}
