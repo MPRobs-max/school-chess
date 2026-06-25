@@ -250,8 +250,8 @@ function isPromotionMove(sourceSquare, targetSquare) {
   // MOVING PIECES
   // This runs every time a player tries to move a piece.
   // =====================
-  function movePiece(sourceSquare, targetSquare) {
-    if (isPromotionMove(sourceSquare, targetSquare)) {
+  function movePiece(sourceSquare, targetSquare, isDragMove = false) {
+    if (!isDragMove && isPromotionMove(sourceSquare, targetSquare)) {
     setPendingMove({
       from: sourceSquare,
       to: targetSquare,
@@ -763,7 +763,9 @@ const promotionButtonStyle = {
             <Chessboard
               position={game.fen()}
               boardOrientation={playerColor === "black" ? "black" : "white"}
-              onPieceDrop={movePiece}
+              onPieceDrop={(sourceSquare, targetSquare) => {
+                return movePiece(sourceSquare, targetSquare, true);
+}}
               onSquareClick={showLegalMoves}
               customSquareStyles={boardStyles}
               onSquareRightClick={handleSquareRightClick}
