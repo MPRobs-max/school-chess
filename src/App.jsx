@@ -251,7 +251,7 @@ function isPromotionMove(sourceSquare, targetSquare) {
   // This runs every time a player tries to move a piece.
   // =====================
   function movePiece(sourceSquare, targetSquare, isDragMove = false) {
-    if (!isDragMove && isPromotionMove(sourceSquare, targetSquare)) {
+    if (isPromotionMove(sourceSquare, targetSquare)) {
     setPendingMove({
       from: sourceSquare,
       to: targetSquare,
